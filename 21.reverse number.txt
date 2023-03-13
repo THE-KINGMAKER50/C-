@@ -1,0 +1,38 @@
+using System;
+ usingSystem.Collections.Generic; 
+usingSystem.ComponentModel;
+ usingSystem.Data;
+ usingSystem.Drawing;
+ usingSystem.Linq; 
+usingSystem.Text;
+ usingSystem.Windows.Forms; 
+
+namespace WindowsFormsApplication11 
+{ 
+publicpartialclassForm1 : Form 
+{ 
+public Form1() 
+{ 
+InitializeComponent(); 
+} 
+privatevoid button1_Click(object sender, EventArgs e) 
+{ 
+int n, rem, reverse; 
+n = Convert.ToInt32(textBox1.Text); reverse = 0; 
+while (n != 0) 
+{ 
+rem = n % 10; 
+reverse = reverse * 10 + rem; n = n / 10; 
+} 
+MessageBox.Show("REVERSE NUMBER IS " + reverse); 
+} 
+privatevoid button2_Click(object sender, EventArgs e) 
+{ 
+                                                                                                              textBox1.Text="";                                                                                  textBox1.Focus();                                                                                                                                                               } 
+privatevoid button3_Click(object sender, EventArgs e) 
+{ 
+this.Close(); 
+} 
+} 
+}
+

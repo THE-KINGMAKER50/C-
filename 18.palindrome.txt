@@ -1,0 +1,47 @@
+using System;  
+usingSystem.Collections.Generic; 
+usingSystem.ComponentModel; 
+usingSystem.Data; 
+usingSystem.Drawing; 
+usingSystem.Linq; 
+usingSystem.Text; 
+usingSystem.Windows.Forms; 
+
+namespace WindowsFormsApplication8 
+{ 
+publicpartialclassForm1 : Form 
+{ 
+public Form1() 
+{ 
+InitializeComponent(); 
+} 
+privatevoid button1_Click(object sender, EventArgs e) 
+{ 
+intn,r,sum=0,temp; 
+n = Convert.ToInt32(textBox1.Text); temp = n; 
+while(n>0) 
+{ r=n%10; 
+sum=(sum*10)+r; n=n/10; 
+} 
+if(temp== sum) 
+{ 
+MessageBox.Show("NUMBER IS PALINDROME"); 
+} 
+else 
+{ 
+MessageBox.Show("NUMBER IS NOT PALINDROME"); 
+} 
+} 
+privatevoid button2_Click(object sender, EventArgs e) 
+{ 
+textBox1.Text = ""; textBox1.Focus(); 
+} 
+privatevoid button3_Click(object sender, EventArgs e) 
+{ 
+this.Close(); 
+} 
+} 
+}
+
+
+

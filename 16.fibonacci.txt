@@ -1,0 +1,37 @@
+using System; 
+usingSystem.Collections.Generic; ]
+usingSystem.ComponentModel; 
+usingSystem.Data; 
+usingSystem.Drawing; 
+usingSystem.Linq;
+ usingSystem.Text; 
+usingSystem.Windows.Forms; 
+namespace WindowsFormsApplication6 
+{ 
+publicpartialclassForm1 : Form 
+{ 
+public Form1() 
+{ 
+InitializeComponent(); 
+} 
+privatevoid button1_Click(object sender, EventArgs e) 
+{ 
+inta,b,c,i,n; a=0; 
+b=1; 
+n = Convert.ToInt32(textBox1.Text); listBox1.Items.Add(a); listBox1.Items.Add(b); 
+for (i = 3; i <= n; i++) 
+{ 
+c=a+b; a=b; b=c; 
+listBox1.Items.Add(c); 
+} 
+} 
+privatevoid button2_Click(object sender, EventArgs e) 
+{ 
+textBox1.Text = ""; textBox1.Focus(); 
+} 
+privatevoid button3_Click(object sender, EventArgs e) 
+{ 
+this.Close(); 
+} 
+} 
+}
