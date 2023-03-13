@@ -1,0 +1,30 @@
+using System;
+usingSystem.Collections.Generic;
+usingSystem.Linq;
+usingSystem.Text;
+
+namespace ConsoleApplication67
+{
+
+
+class Program : SystemException
+        {
+static void Main(string[] args)
+            {
+int[] arr = { 1, 2, 3, 4, 5 };
+for (inti = 0; i<arr.Length; i++)
+                {
+Console.WriteLine(arr[i]);
+                }
+try
+                {
+Console.WriteLine(arr[7]);
+                }
+catch (IndexOutOfRangeException e)
+                {
+Console.WriteLine("cannot display 7th position  :", e.Message);
+                }
+
+            }
+        }
+    }
