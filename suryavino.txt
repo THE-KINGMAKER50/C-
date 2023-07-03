@@ -1,0 +1,520 @@
+
+const express = require('express');
+const multer = require('multer');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+
+const app = express();
+const upload = multer({ dest: 'uploads/' });
+
+// Serve static files
+app.use(express.static('public'));
+
+// Set up the EJS view engine
+app.set('view engine', 'ejs');
+
+// Parse JSON and form data
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// MongoDB connection URI
+const uri = 'mongodb+srv://suryagowtham567:12345@cluster0.6z84hhs.mongodb.net/';
+// Database and collection names
+const dbName = 'crud';
+const collectionName = 'users';
+
+// Connect to MongoDB using Mongoose
+mongoose
+  .connect(uri + dbName, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch(error => {
+    console.error('Error connecting to MongoDB:', error);
+  });
+
+// Create a User schema and model using Mongoose
+const userSchema = new mongoose.Schema({
+  name: String ,
+  email: String,
+  phone: String,
+  image: String,
+});
+
+const User = mongoose.model('User', userSchema);
+
+// Routes
+app.get('/add', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.render('index', { users });
+  } catch (error) {
+    console.error('Error fetching data from MongoDB:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.render('indy', { users });
+  } catch (error) {
+    console.error('Error fetching data from MongoDB:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/add', (req, res) => {
+  res.render('index', { title: 'Add users' });
+});
+
+app.post('/add-user', (req, res) => {
+  const { name, email, phone, image } = req.body;
+
+  // Create a new User instance
+  const newUser = new User({ name, email, phone, image });
+
+  // Save the user data to MongoDB
+  newUser
+    .save()
+    .then(() => {
+      res.json({
+        message: 'User added successfully',
+      });
+    })
+    .catch(error => {
+      console.error('Error adding user:', error);
+      res.status(500).json({
+        message: 'An error occurred',
+      });
+    });
+});
+
+app.post('/submit', upload.single('file'), (req, res) => {
+  // Process form data
+  const { name, email, phone } = req.body;
+  const file = req.file;
+  // Create a new User instance
+  const newUser = new User({ name, email, phone, image: file.path });
+
+  // Save the data to MongoDB
+  newUser
+    .save()
+    .then(() => {
+      console.log('Data saved to MongoDB');
+      res.redirect('/');
+    })
+    .catch(error => {
+      console.error('Error saving data to MongoDB:', error);
+      res.status(500).send('Internal Server Error');
+    });
+});
+
+app.get('/edit/:id', async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const user = await User.findById(userId);
+    res.render('edit', { user });
+  } catch (error) {
+    console.error('Error fetching user from MongoDB:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post('/update/:id', upload.single('file'), (req, res) => {
+  const userId = req.params.id;
+  const { name, email, phone } = req.body;
+  const file = req.file;
+
+  // Update the user in MongoDB
+  User.findByIdAndUpdate(userId, { name, email, phone, image: file })
+    .then(() => {
+      console.log('User updated in MongoDB');
+      res.redirect('/');
+    })
+    .catch(error => {
+      console.error('Error updating user in MongoDB:', error);
+      res.status(500).send('Internal Server Error');
+    });
+});
+
+app.get('/delete/:id', (req, res) => {
+  const userId = req.params.id;
+
+  // Delete the user from MongoDB
+  User.findByIdAndDelete(userId)
+    .then(() => {
+      console.log('User deleted from MongoDB');
+      res.redirect('/');
+    })
+    .catch(error => {
+      console.error('Error deleting user from MongoDB:', error);
+      res.status(500).send('Internal Server Error');
+    });
+});
+
+// Start the server
+const port = 3000;
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
+
+
+--------------------------------------------------------------------------
+
+
+edit.ejs
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit User</title>
+</head>
+<style>
+  body{
+    background-image: url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwbTZY7TqOie2PME33SS0X0uYm2FSU7igxZlL6U9J8-g&s);
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+</style>
+<center>
+<body>
+  <h1>Edit User</h1>
+
+  <form action="/update/<%= user._id %>" method="post" enctype="multipart/form-data">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" value="<%= user.name %>" required><br><br>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" value="<%= user.email %>" required><br><br>
+
+    <label for="phone">Phone:</label>
+    <input type="tel" id="phone" name="phone" value="<%= user.phone %>" required><br><br>
+
+    <label for="file">File:</label>
+    <input type="file" id="file" name="file"><br><br>
+
+    <input type="submit" value="Update">
+  </form>
+</center>
+</body>
+</html>
+-------------------------------------------------------------------
+
+index1.ejs
+
+<%- include('header') %>
+    <div class="container">
+        <div class="row my-4 ">
+            <div class="col-lg-12">
+                <div class="table-responsive">
+                    <table class="table table-striped text-center">
+                        <thead>
+                            <tr class="table-dark">
+                                <th>Id</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>image</th>
+                                <th>Action</th> 
+                            </tr>
+                        </thead>
+                        <% for(let i = 0; i < user.length; i++) {%>
+                        <tbody>
+                            <td><%- user[i].id%></td>
+                            <td><%- user[i].name%></td>
+                            <td><%- user[i].email%></td>
+                            <td><%- user[i].phone%></td> 
+                            <td><%- user[i].image%></td>
+                            <td><a href="/edit/<%= user[i].id%>"class="text-success"><i class="fas fa-edit fa-lg mx-1"></i></a>
+                                <a class="text-danger"><i class="fas fa-trash fa-lg mx-1"></i></a>
+                            </td>
+                        </tbody>
+                       <% }%>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+-------------------------------------------------------------
+
+indy.ejs
+
+
+
+ <%- include('header') %>
+    <div class="container">
+        <div class="row my-4 ">
+            <div class="col-lg-12">
+                <div class="table-responsive">
+                    <table class="table table-striped text-center">
+                        <thead>
+                            <style>
+                                body{
+                                    background-image: url(data:image/jpeg;base64,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);
+                                    
+                                    background-size: cover;
+                                    background-repeat:no-repeat ;
+                                }
+                            </style>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" 
+  integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+                            <script>
+                                $(document).ready(function() {
+                                  // Delete user
+                                  $('.delete-button').on('click', function() {
+                                    var userId = $(this).data('id');
+                                    $.ajax({
+                                      url: '/delete/' + userId,
+                                      type: 'GET',
+                                      dataType: 'json',
+                                      success: function(response) {
+                                        // console.log(res);
+
+
+
+
+                                        console.log(response);
+                                        alert(response.message);
+                                        window.location.reload();
+                                      },
+                                      error: function(xhr, status, error) {
+                                        console.error(xhr.responseText);
+                                        alert('deleted success');
+                                        window.location.reload()
+                                      }
+                                    });
+                                  });
+                                });
+                              </script>
+                            <tr class="table-dark">
+                                <th>Id</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Action</th> 
+                            </tr>
+                        </thead>
+                        <% for(let i = 0; i < users.length; i++) {%>
+                        <tbody>
+                            <td><%- users[i].id%></td>
+                            <td><%- users[i].name%></td>
+                            <td><%- users[i].email%></td>
+                            <td><%- users[i].phone%></td> 
+                            <td><a href="/edit/<%= users[i].id%>"class="text-success"><i class="fas fa-edit fa-lg mx-1"></i></a>
+<a class="text-danger delete-button" data-id="<%= users[i].id %>"><i class="fas fa-trash fa-lg mx-1"></i></a>
+                            </td>
+                        </tbody>
+                       <% }%>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+--------------------------------------------------------------
+
+index.ejs
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CRUD Example</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" 
+  integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <script>
+    $(document).ready(function() {
+      // Delete user
+      $('.delete-button').on('click', function() {
+        var userId = $(this).data('id');
+        $.ajax({
+          url: '/delete/' + userId,
+          type: 'GET',
+          dataType: 'json',
+          success: function(response) {
+            // console.log(res);
+            console.log(response);
+            alert(response.message);
+            window.location.reload();
+          },
+          error: function(xhr, status, error) {
+            console.error(xhr.responseText);
+            alert('deleted success');
+          }
+        });
+      });
+    });
+  </script>
+</head>
+<style>
+  body{
+background-image: url("https://img.freepik.com/free-vector/blue-copy-space-digital-background_23-2148821698.jpg?w=740&t=st=1688211882~exp=1688212482~hmac=e9b0783c9455625b2543cae31f7ed19b670f2621035b13e91767befa133db628");
+    background-repeat: no-repeat;
+    background-size:cover;
+  }
+</style>
+<center>
+<body>
+  
+  <h1 style="color:rgb(170, 79, 140);">CRUD WITH EJS</h1>
+
+  <h2>Add User</h2>
+  <form action="/submit" method="post" enctype="multipart/form-data">
+    <label for="name" style="background-color: aliceblue;">Name:</label>
+    <input type="text" id="name" name="name" required><br><br>
+
+    <label for="email"  style="background-color: aliceblue;">Email:</label>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <label for="phone" style="background-color: aliceblue;">Phone:</label>
+    <input type="tel" id="phone" name="phone" required><br><br>
+
+    <label for="file" style="background-color: aliceblue;">File:</label>
+    <input type="file" id="file" name="file"><br><br>
+
+    <input type="submit" value="Submit">
+    <a   href="/">dashboard</a>
+  </form>
+<!-- 
+  <h2 >Users</h2>
+  <% users.forEach(user => { %>
+    <div>
+      <h3 style="color: rgb(189, 202, 212);"><%= user.name %></h3>
+      <p style="color: rgb(197, 210, 223);">Email: <%= user.email %></p>
+      <p style="color: rgb(190, 203, 214);">Phone: <%= user.phone %></p>
+      <% if (user.file) { %>
+        <p>File: <%= user.file.filename %></p>
+      <% } %>
+      <a href="/edit/<%= user._id %>">Edit</a>
+      <button class="delete-button" data-id="<%= user._id %>">Delete</button>
+    </div>
+  <% }); %> -->
+</center>
+</body>
+</html>
+----------------------------------------------------------
+
+add_users.ejs
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+
+ 
+</head>
+<body>
+    <style>
+    *{
+        background-color: rgb(31, 23, 141);
+    }
+    </style>   
+
+<div class="container" >
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="panel-heading">
+                <div class="panel-title">Add Details </div><br>
+                 </div>  
+            <div>
+                <form id="addUserForm" >
+                    <div class="row mb-3">
+                        <label for="name" class="col-sm-2 col-form-label">Name</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="name" placeholder="Enter your name" class="form-control"
+                                required />
+                        </div>
+                    </div><br />
+                    <div class="row mb-3">
+                        <label for="email" class="col-sm-2 col-form-label">Email</label>
+                        <div class="col-sm-10">
+                            <input type="email" name="email" placeholder="Enter your email" class="form-control"
+                                required />
+                        </div>
+                    </div><br />
+                    <div class="row mb-3">
+                        <label for="phone" class="col-sm-2 col-form-label">Phone</label>
+                        <div class="col-sm-10">
+                            <input type="tel" name="phone" placeholder="Enter your phone number"
+                                class="form-control" required />
+                        </div>
+                    </div><br />
+                    <div class="nb=3 d-grid">
+                        <label for="image" class="form-label">select image</label>
+                        <input class="form-control form-control-lg" type="file" name="image"
+                        required/>
+                    </div>
+                    <div class="row mb-3">
+                        <input type="submit" name="submit" value="Add user" class="btn btn-primary btn-lg" />
+                    </div>
+
+                </form>
+                <script>
+                    const $form = $('#addUserForm')
+
+                    $form.on('submit', submitHandler)
+
+                    function submitHandler(e) {
+                        e.preventDefault()
+
+                        $.ajax({
+                            url: 'http://localhost:3000/add-user',
+                            type: 'POST',
+                            data: $form.serialize()
+                        }).done(response => {
+                            console.log(response)
+                        })
+                    }
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+----------------------------------------------------------
+
+header.ejs
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" integrity="sha512-t4GWSVZO1eC8BM339Xd7Uphw5s17a86tIZIj8qRxhnKub6WoyhnrxeCIMeAqBPgdZGlCcG2PrZjMc+Wr78+5Xg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    
+</head>
+
+<body>
+    <div>
+        <ul>
+            <li>
+                <a href="/add">Add user</a>
+            </li>
+        </ul>
+    </div>
+</body>
+</html>
+
+
+
+
