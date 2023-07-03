@@ -1,0 +1,325 @@
+index.js
+
+
+require('dotenv').config();
+const express = require('express');
+const mongoose =require('mongoose');
+const session = require('express-session');
+const app = express();
+const PORT = process.env.PORT;
+const bodyParser = require('body-parser');
+const router = require('./routes/route');
+
+
+//app.use(bodyParser.json());  
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.set ("view engine","ejs")
+
+app.get('/set',(req,res)=>{
+    res.render('index',{name:"express"});
+});
+
+mongoose.connect(process.env.DB_URI, 
+    {useNewUrlParser: true,
+        useUnifiedTopology: true})
+.then(()=>{
+    console.log('Database Connected');
+}).catch((err)=>{
+    console.log('Connection error');
+});
+
+//database connection
+// const MongoClient = mongodb.MongoClient
+
+app.listen (PORT,()=>{
+    console.log(`itho ungal server http://localhost:${PORT} `);
+});
+
+
+app.use('/',router);
+
+----------------------------------------------------------------
+index.ejs
+
+
+
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="panel-heading">
+                    <div class="panel-title">Add Details </div><br>
+                     </div>  
+                <div>
+                    <form id="addUserForm" >
+                        <div class="row mb-3">
+                            <label for="name" class="col-sm-2 col-form-label">Name</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="name" placeholder="Enter your name" class="form-control"
+                                    required />
+                            </div>
+                        </div><br />
+                        <div class="row mb-3">
+                            <label for="email" class="col-sm-2 col-form-label">Email</label>
+                            <div class="col-sm-10">
+                                <input type="email" name="email" placeholder="Enter your email" class="form-control"
+                                    required />
+                            </div>
+                        </div><br />
+                        <div class="row mb-3">
+                            <label for="phone" class="col-sm-2 col-form-label">Phone</label>
+                            <div class="col-sm-10">
+                                <input type="tel" name="phone" placeholder="Enter your phone number"
+                                    class="form-control" required />
+                            </div>
+                        </div><br />
+                        <div class="row mb-3">
+                            <input type="submit" name="submit" value="Add user" class="btn btn-primary btn-lg" />
+                        </div>
+
+                    </form>
+                    <script>
+                        const $form = $('#addUserForm')
+
+                        $form.on('submit', submitHandler)
+
+                        function submitHandler(e) {
+                            e.preventDefault()
+
+                            $.ajax({
+                                url: 'http://localhost:4000/add-user',
+                                type: 'POST',
+                                data: $form.serialize()
+                            }).done(response => {
+                                console.log(response)
+                            })
+                        }
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    ---------------------------------------------------------------------
+    
+    
+    route.js
+    
+    
+    
+    const express = require('express');
+const router = express.Router();
+const User = require('../models/user');
+//page check
+
+
+  router.post('/show',async(req,res)=>{
+    await User.find({}).then((data)=>{
+        res.render('index',{"user":data});
+    }).catch((err)=>{
+        res.json({message : "some error occur"});
+    })
+});
+
+router.get('/filter',async(req,res)=>{
+    let id = req.body.id;
+    await User.findById(id).then((data)=>{
+        res.json({data});
+    }).catch((err)=>{
+        res.json({message : "some error occurs"});
+    })
+});
+
+  router.post('/update',async(req,res)=>{
+    let id = req.body.id;
+    const updateFiled = {
+        name : req.body.name,
+        email : req.body.email,
+        password :  req.body.password
+        // phone : req.body.phone,
+        // city : req.body.city
+    }
+    await User.findByIdAndUpdate(id,{$set : updateFiled}).then((data)=>{
+        res.json({message : 'Data Updated'});
+    }).catch((err)=>{
+        res.json({message : 'some error occurs'});
+    })
+});
+  router.post('/register',async(req,res)=>{
+    const user = new User({
+        name : req.body.name,
+        email : req.body.email,
+        password :  req.body.password
+        // phone : req.body.phone,
+        // city : req.body.city
+    })
+    await user.save().then((data)=>{
+        res.json({message : "Data added",user:data});
+    }).catch((err)=>{
+        res.json({message:"some error occurs"});
+    })
+});
+
+router.get("/",(req,res)=>{
+    res.render('registration');
+}) 
+
+module.exports = router;
+
+
+
+----------------------------------------------------------------
+
+add_users.ejs
+
+
+
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="panel-heading">
+                    <div class="panel-title">Add Details </div><br>
+                     </div>  
+                <div>
+                    <form id="addUserForm" >
+         <div class="row mb-3">
+                <label for="name" class="col-sm-2 col-form-label">Name</label>
+                            <div class="col-sm-10">
+             <input type="text" name="name" placeholder="Enter your name" class="form-control"
+                           required />
+                            </div>
+                       </div><br />
+                        <div class="row mb-3">
+                            <label for="email" class="col-sm-2 col-form-label">Email</label>
+                            <div class="col-sm-10">
+                                <input type="email" name="email" placeholder="Enter your email" class="form-control"
+                                    required />
+                            </div>
+                        </div><br />
+                        <div class="row mb-3">
+                            <label for="phone" class="col-sm-2 col-form-label">Phone</label>
+                            <div class="col-sm-10">
+                                <input type="tel" name="phone" placeholder="Enter your phone number"
+                                    class="form-control" required />
+                            </div>
+                        </div><br />
+                        <div class="row mb-3">
+                            <input type="submit" name="submit" value="Add user" class="btn btn-primary btn-lg" />
+                        </div>
+
+                    </form>
+                    <script>
+                        const $form = $('#addUserForm')
+
+                        $form.on('submit', submitHandler)
+
+                        function submitHandler(e) {
+                            e.preventDefault()
+
+                            $.ajax({
+                                url: 'http://localhost:4000/add',
+                                type: 'POST',
+                                data: $form.serialize()
+                            }).done(response => {
+                                console.log(response)
+                            })
+                        }
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+----------------------------------------------------------------
+
+registration.ejs
+
+
+<!-- registration.ejs -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Registration Form</title>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+</head>
+<body>
+  <div class="container">
+    <h1>Registration Form</h1>
+    <form>
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required>
+
+      <button type="submit">Register</button>
+    </form>
+  </div>
+
+
+  <script>
+    $(document).ready(function () {
+  $("form").submit(function (event) {
+    var formData = {
+      name: $("#name").val(),
+      email: $("#email").val(),
+      password: $("#password").val(),
+    };
+
+    $.ajax({
+      type: "POST",
+      url: "http://localhost:4000/register",
+      data: formData,
+      dataType: "json",
+      encode: true,
+    }).done(function (data) {
+      console.log(data);
+    });
+
+    event.preventDefault();
+  });
+});
+  </script>
+</body>
+</html>
+
+----------------------------------------------------------
+
+users.js
+
+
+const mongoose = require('mongoose');
+const userSchema = new mongoose.Schema({
+    name : {type:String},
+    email : {type:String},
+    phone : {type:Number},
+    city : {type:String},
+    image:{type:String},
+    created:{type:Date,default:Date.now}
+},{timestamps:true});
+
+const User = mongoose.model('User',userSchema);
+module.exports = User;
+
+
+
+---------------------------------------------------
+
+.env 
+
+PORT = 4000
+DB_URI = mongodb+srv://suryagowtham567:12345@cluster0.6z84hhs.mongodb.net/tamil
+
+
+
